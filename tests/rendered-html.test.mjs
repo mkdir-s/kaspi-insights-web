@@ -22,6 +22,9 @@ test("renders the Kaspi Insights upload experience", async () => {
   assert.match(html, /Перетащите PDF-выписку/);
   assert.match(html, /Локальная обработка/);
   assert.match(html, /Красивый экспорт/);
+  assert.match(html, /Как получить выписку в Kaspi Gold/);
+  assert.match(html, /С 1 января/);
+  assert.match(html, /Выгрузите в PDF/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
 });
 
@@ -32,4 +35,3 @@ test("declares privacy and the supported PDF workflow", async () => {
   assert.match(html, /Файл обрабатывается только в вашем браузере/);
   assert.match(html, /accept="application\/pdf,.pdf"/);
 });
-

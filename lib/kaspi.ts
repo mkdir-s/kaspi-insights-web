@@ -40,6 +40,7 @@ export type Analytics = {
   totalExpense: number;
   externalNet: number;
   incomingTransfers: { count: number; amount: number };
+  incomingTransfersByMonth: Array<{ month: string; label: string; count: number; amount: number }>;
   outgoingTransfers: { count: number; amount: number };
   purchases: { count: number; amount: number; average: number };
   ownTransfers: { count: number; amount: number };
@@ -319,6 +320,23 @@ export function buildAnalytics(transactions: Transaction[], openingBalance = 0):
   const senders = rank(incomingTransfers, (tx) => tx.counterparty, true);
   const recipients = rank(outgoingTransfers, (tx) => tx.counterparty);
   const operations = rank(transactions.filter((tx) => tx.direction !== "internal"), (tx) => tx.kind);
+  const incomingByMonthMap = new Map<string, { count: number; amount: number }>();
+  for (const tx of incomingTransfers) {
+    const month = tx.date.slice(0, 7);
+    const current = incomingByMonthMap.get(month) ?? { count: 0, amount: 0 };
+    current.count += 1;
+    current.amount += tx.amount;
+    incomingByMonthMap.set(month, current);
+  }
+  const incomingTransfersByMonth = [...monthlyMap.keys()].sort().map((month) => {
+    const current = incomingByMonthMap.get(month) ?? { count: 0, amount: 0 };
+    return {
+      month,
+      label: new Intl.DateTimeFormat("ru-RU", { month: "long" }).format(new Date(`${month}-01T12:00:00`)),
+      count: current.count,
+      amount: current.amount,
+    };
+  });
 
   const weekdayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
   const weekdayMap = weekdayNames.map((name) => ({ name, amount: 0, count: 0 }));
@@ -384,6 +402,7 @@ export function buildAnalytics(transactions: Transaction[], openingBalance = 0):
     totalExpense,
     externalNet: external.reduce((sum, tx) => sum + tx.amount, 0),
     incomingTransfers: { count: incomingTransfers.length, amount: incomingTransfers.reduce((sum, tx) => sum + tx.amount, 0) },
+    incomingTransfersByMonth,
     outgoingTransfers: { count: outgoingTransfers.length, amount: outgoingTransfers.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) },
     purchases: { count: purchases.length, amount: purchaseAmount, average: purchases.length ? purchaseAmount / purchases.length : 0 },
     ownTransfers: { count: own.length, amount: own.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) },
